@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -60,7 +59,8 @@ name = st.text_input(t("Full name"))
 email = st.text_input(t("Email"))
 phone = st.text_input(t("Phone number"))
 dob_or_age = st.text_input(t("Date of birth or age"))
-gender = st.selectbox(t("Gender"), [t("Male"), t("Female"), t("Other")])
+# Gender choice simplified here
+gender = st.selectbox(t("Gender"), [t("Male"), t("Female")])
 responder = st.selectbox(t("Who is answering?"), [t("Self (adult)"), t("Parent / guardian (for a child)"), t("Teacher / other")])
 
 # -------------------------
@@ -94,7 +94,7 @@ symptom_texts = [
 
 sym_answers = {}
 for i, s in enumerate(symptom_texts, start=1):
-    prefix = t("Does your child") if responder == t("Parent / guardian (for a child)") else (t("Does the person") if responder==t("Teacher / other") else t("Do you"))
+    prefix = t("Does your child") if responder == t("Parent / guardian (for a child)") else (t("Does the person") if responder == t("Teacher / other") else t("Do you"))
     label = f"{i}. {prefix} {t(s)}?"
     sym_answers[f"Symptom_{i}"] = st.selectbox(label, freq_options, key=f"sym_{i}")
 
@@ -128,25 +128,22 @@ referral_reason = st.text_area(t("Reason for referral / main concern"))
 # ASRS-6 screener (adult brief)
 # -------------------------
 st.header(t("ASRS-6 screener (brief adult items)"))
-# -------------------------
-# Finish ASRS-6 items (complete 6 items)
-# -------------------------
-asrs_items += [
+asrs_items = [
     "How often do you have problems remembering appointments or obligations?",
     "How often do you have difficulty finishing projects or chores (even those you enjoy)?",
     "How often do you have difficulty concentrating on what people say to you, even when they are speaking to you directly?"
 ]
-# display ASRS
+
 asrs_answers = {}
 asrs_options = ["", t("Never"), t("Rarely"), t("Sometimes"), t("Often"), t("Very often")]
 for i, item in enumerate(asrs_items, start=1):
     asrs_answers[f"ASRS_{i}"] = st.selectbox(f"ASRS {i}. {t(item)}", asrs_options, key=f"asrs_{i}")
 
 # compute ASRS numeric score (map: Never=0, Rarely=1, Sometimes=2, Often=3, Very often=4)
-score_map = {t("Never"):0, t("Rarely"):1, t("Sometimes"):2, t("Often"):3, t("Very often"):4, "": None}
+score_map = {t("Never"): 0, t("Rarely"): 1, t("Sometimes"): 2, t("Often"): 3, t("Very often"): 4, "": None}
 asrs_score = None
 try:
-    numeric = [score_map[asrs_answers[f"ASRS_{i}"]] for i in range(1, len(asrs_items)+1)]
+    numeric = [score_map[asrs_answers[f"ASRS_{i}"]] for i in range(1, len(asrs_items) + 1)]
     if None not in numeric:
         asrs_score = sum(numeric)
         st.write(t("ASRS total score:"), asrs_score)
@@ -159,7 +156,8 @@ except Exception:
 # Safety / suicidality (urgent)
 # -------------------------
 st.header(t("Safety"))
-suicidality = st.selectbox(t("Any current thoughts of self-harm or suicide?"), ["", t("No"), t("Yes, passive thoughts"), t("Yes, active thoughts/plan")])
+suicidality = st.selectbox(t("Any current thoughts of self-harm or suicide?"),
+                           ["", t("No"), t("Yes, passive thoughts"), t("Yes, active thoughts/plan")])
 if suicidality == t("Yes, active thoughts/plan"):
     st.error(t("URGENT: The person reports active suicidal thoughts or a plan. Please stop the form and contact emergency services or the on-call clinician immediately."))
     st.stop()
@@ -174,13 +172,19 @@ agree_save = consent
 if st.button(t("Submit")):
     # required checks
     missing_fields = []
-    if not name.strip(): missing_fields.append(t("Name"))
-    if not email.strip(): missing_fields.append(t("Email"))
-    if not phone.strip(): missing_fields.append(t("Phone"))
+    if not name.strip():
+        missing_fields.append(t("Name"))
+    if not email.strip():
+        missing_fields.append(t("Email"))
+    if not phone.strip():
+        missing_fields.append(t("Phone"))
     # require all DSM items answered
     if any(v == "" for v in sym_answers.values()):
         missing_fields.append(t("All DSM-5 symptom items"))
-    if any(v == "" for v in com := { } ):  # placeholder to avoid lint error; real comorbidities handled below
+
+    # Placeholder for comorbidities check replaced with safe code
+    com = {}
+    if any(v == "" for v in com):
         pass
 
     if not functional_impairment.strip():
@@ -198,14 +202,14 @@ if st.button(t("Submit")):
             header = sheet.row_values(1)
             if not header:
                 header = [
-                    "Participant_ID","Name","Email","Phone","DOB_or_Age","Gender","Responder","Language",
-                    "Age_of_onset","Onset_before_12","Duration","Multi_setting","Functional_impairment",
-                    "Prior_diagnosis","Prior_treatment","Current_medication","School_work_problems",
-                    "Learning_history","Family_history","Medical_history","Sleep_problems","Substance_use",
-                    "Referral_reason","Suicidality","Consent","ASRS_score","Submission_timestamp"
+                    "Participant_ID", "Name", "Email", "Phone", "DOB_or_Age", "Gender", "Responder", "Language",
+                    "Age_of_onset", "Onset_before_12", "Duration", "Multi_setting", "Functional_impairment",
+                    "Prior_diagnosis", "Prior_treatment", "Current_medication", "School_work_problems",
+                    "Learning_history", "Family_history", "Medical_history", "Sleep_problems", "Substance_use",
+                    "Referral_reason", "Suicidality", "Consent", "ASRS_score", "Submission_timestamp"
                 ]
-                header += [f"Symptom_{i}" for i in range(1,19)]
-                header += [f"ASRS_{i}" for i in range(1, len(asrs_items)+1)]
+                header += [f"Symptom_{i}" for i in range(1, 19)]
+                header += [f"ASRS_{i}" for i in range(1, len(asrs_items) + 1)]
                 sheet.append_row(header)
         except Exception as e:
             st.error(t("Error preparing Google Sheet header:") + f" {e}")
@@ -220,9 +224,9 @@ if st.button(t("Submit")):
             referral_reason, suicidality, "Yes" if consent else "No", asrs_score if asrs_score is not None else ""
         ]
         # add symptoms
-        row += [sym_answers[f"Symptom_{i}"] for i in range(1,19)]
+        row += [sym_answers[f"Symptom_{i}"] for i in range(1, 19)]
         # add ASRS items
-        row += [asrs_answers[f"ASRS_{i}"] for i in range(1, len(asrs_items)+1)]
+        row += [asrs_answers[f"ASRS_{i}"] for i in range(1, len(asrs_items) + 1)]
         # timestamp
         row += [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
 
@@ -232,7 +236,3 @@ if st.button(t("Submit")):
             st.success(t("Submission successful. Thank you — the clinician will review the results."))
         except Exception as e:
             st.error(t("Error submitting data to Google Sheets:") + f" {e}")
-
-
-
-
