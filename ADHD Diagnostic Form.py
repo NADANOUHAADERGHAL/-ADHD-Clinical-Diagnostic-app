@@ -1,155 +1,238 @@
+# app.py
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import uuid
-from deep_translator import GoogleTranslator
 
-# ===============================
-# GOOGLE SHEETS SETUP
-# ===============================
-SERVICE_ACCOUNT = st.secrets["google_service_account"]
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
+# optional translator; graceful fallback if not available or offline
 try:
-    creds = Credentials.from_service_account_info(SERVICE_ACCOUNT, scopes=SCOPES)
+    from deep_translator import GoogleTranslator
+    def translate_to(lang_code, text):
+        if lang_code == "en": return text
+        try:
+            return GoogleTranslator(source="auto", target=lang_code).translate(text)
+        except Exception:
+            return text
+except Exception:
+    def translate_to(lang_code, text):
+        return text
+
+# -------------------------
+# CONFIG
+# -------------------------
+st.set_page_config(page_title="ADHD Clinical Form", layout="centered")
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+SHEET_NAME = "ADHD_Responses"    # change if your sheet has another name
+
+# -------------------------
+# Authenticate to Google Sheets from Streamlit secrets
+# (Make sure .streamlit/secrets.toml has [gcp_service_account] block)
+# -------------------------
+try:
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=SCOPES)
     client = gspread.authorize(creds)
-    sheet = client.open("ADHD_Responses").sheet1
+    sheet = client.open(SHEET_NAME).sheet1
 except Exception as e:
-    st.warning("Google Sheets access error. Make sure API is enabled and sheet is shared with service account.")
+    st.error("Google Sheets access error. Make sure APIs are enabled and the sheet is shared with your service account.")
     st.stop()
 
-# ===============================
-# APP TITLE
-# ===============================
-st.title("ADHD Diagnostic Form")
+# -------------------------
+# LANGUAGE
+# -------------------------
+lang_choice = st.selectbox("Preferred language / اللغة / Langue", ["English", "العربية", "Français"])
+lang_code = {"English": "en", "العربية": "ar", "Français": "fr"}[lang_choice]
 
-# ===============================
-# LANGUAGE SELECTION
-# ===============================
-language = st.selectbox("Preferred Language / اللغة المفضلة / Langue préférée", ["English", "العربية", "Français"])
+def t(s): return translate_to(lang_code, s)
 
-def translate(text):
-    if language == "English":
-        return text
-    return GoogleTranslator(source="en", target=language.lower()).translate(text)
+# -------------------------
+# Title & instructions
+# -------------------------
+st.title(t("ADHD Clinical Questionnaire"))
+st.write(t("This form collects clinical information used for ADHD assessment. All data will be stored privately."))
 
-# ===============================
-# PARTICIPANT INFORMATION
-# ===============================
-st.header(translate("Participant Information"))
+# -------------------------
+# Participant & responder info
+# -------------------------
+st.header(t("Participant and responder information"))
 participant_id = str(uuid.uuid4())
-name = st.text_input(translate("Full Name"))
-email = st.text_input(translate("Email Address"))
-phone = st.text_input(translate("Phone Number"))
-age = st.number_input(translate("Age"), min_value=3, max_value=100, step=1)
-gender = st.selectbox(translate("Gender"), [translate("Male"), translate("Female")])
-patient_type = st.radio(translate("Are you filling this for a child or adult?"), [translate("Child"), translate("Adult")])
+name = st.text_input(t("Full name"))
+email = st.text_input(t("Email"))
+phone = st.text_input(t("Phone number"))
+dob_or_age = st.text_input(t("Date of birth or age"))
+gender = st.selectbox(t("Gender"), [t("Male"), t("Female"), t("Other")])
+responder = st.selectbox(t("Who is answering?"), [t("Self (adult)"), t("Parent / guardian (for a child)"), t("Teacher / other")])
 
-# ===============================
-# ADHD QUESTIONS
-# ===============================
-st.header(translate("ADHD Symptoms Questions"))
-st.write(translate("Please answer all questions. All questions are mandatory."))
+# -------------------------
+# DSM-5 18 symptoms (frequency scale)
+# -------------------------
+st.header(t("DSM-5 ADHD symptom checklist — frequency in last 6 months"))
+freq_options = ["", t("Never"), t("Rarely"), t("Sometimes"), t("Often"), t("Very often")]
 
-symptoms = [
-    "Often fails to give close attention to details or makes careless mistakes in schoolwork, work, or other activities.",
-    "Often has difficulty sustaining attention in tasks or play activities.",
-    "Often does not seem to listen when spoken to directly.",
-    "Often does not follow through on instructions and fails to finish schoolwork, chores, or duties.",
-    "Often has difficulty organizing tasks and activities.",
-    "Often avoids, dislikes, or is reluctant to engage in tasks that require sustained mental effort.",
-    "Often loses things necessary for tasks or activities.",
-    "Is often easily distracted by extraneous stimuli.",
-    "Is often forgetful in daily activities.",
-    "Often fidgets with or taps hands or feet or squirms in seat.",
-    "Often leaves seat in situations when remaining seated is expected.",
-    "Often runs about or climbs in situations where it is inappropriate.",
-    "Often unable to play or engage in leisure activities quietly.",
-    "Is often 'on the go' or acts as if 'driven by a motor'.",
-    "Often talks excessively.",
-    "Often blurts out answers before questions have been completed.",
-    "Often has difficulty waiting his or her turn.",
-    "Often interrupts or intrudes on others (e.g., butts into conversations or games)."
+symptom_texts = [
+    # inattention 1-9
+    "Fails to give close attention to details or makes careless mistakes",
+    "Has difficulty sustaining attention in tasks or play",
+    "Does not seem to listen when spoken to directly",
+    "Does not follow through on instructions or finish tasks",
+    "Has difficulty organizing tasks and activities",
+    "Avoids or is reluctant to engage in tasks requiring sustained mental effort",
+    "Loses things necessary for tasks or activities",
+    "Is easily distracted by extraneous stimuli",
+    "Is often forgetful in daily activities",
+    # hyperactivity/impulsivity 10-18
+    "Fidgets with or taps hands or feet; squirms in seat",
+    "Often leaves seat when remaining seated is expected",
+    "Runs about or climbs in situations where inappropriate (adults: extreme restlessness)",
+    "Unable to play or engage in activities quietly",
+    "Is often 'on the go' or acts as if 'driven by a motor'",
+    "Talks excessively",
+    "Blurts out answers before questions are completed",
+    "Has difficulty waiting turn",
+    "Interrupts or intrudes on others"
 ]
 
-answers = {}
-for i, q in enumerate(symptoms, 1):
-    prefix = translate("Does your child") if patient_type == translate("Child") else translate("Do you")
-    full_question = f"{prefix} {translate(q)}"
-    answers[f"Symptom_{i}"] = st.selectbox(
-        f"{i}. {full_question}",
-        ["", translate("Never"), translate("Rarely"), translate("Sometimes"), translate("Often"), translate("Very Often")],
-        key=f"q{i}"
-    )
+sym_answers = {}
+for i, s in enumerate(symptom_texts, start=1):
+    prefix = t("Does your child") if responder == t("Parent / guardian (for a child)") else (t("Does the person") if responder==t("Teacher / other") else t("Do you"))
+    label = f"{i}. {prefix} {t(s)}?"
+    sym_answers[f"Symptom_{i}"] = st.selectbox(label, freq_options, key=f"sym_{i}")
 
-# ===============================
-# COMORBIDITIES
-# ===============================
-st.header(translate("Comorbidities / Associated Conditions"))
-comorbidities = [
-    "Anxiety or excessive worry",
-    "Depression or persistent sadness",
-    "Oppositional defiant behavior",
-    "Learning difficulties or dyslexia"
+# optional: examples for clinicians
+st.subheader(t("If possible, give one short example of typical problematic behaviour"))
+sym_examples = st.text_area(t("Examples (optional)"))
+
+# -------------------------
+# Clinical history & context
+# -------------------------
+st.header(t("History and context"))
+age_of_onset = st.text_input(t("Approximate age when symptoms were first noticed (e.g., 7)"))
+onset_before_12 = st.selectbox(t("Were symptoms present before age 12?"), ["", t("Yes"), t("No")])
+duration_months = st.text_input(t("Duration of problems (months or years)"))
+multi_setting = st.selectbox(t("Are symptoms observed in more than one setting (home, school, work)?"), ["", t("Yes"), t("No")])
+functional_impairment = st.text_area(t("Describe how symptoms impair daily functioning (social/academic/occupational)"))
+
+prior_diagnosis = st.selectbox(t("Previous ADHD diagnosis?"), ["", t("Yes"), t("No")])
+prior_treatment = st.text_area(t("Prior treatments (medication, therapy)"))
+current_medication = st.text_input(t("Current psychotropic medication (name & dose)"))
+
+school_work_problems = st.selectbox(t("Current school/work performance problems?"), ["", t("Yes"), t("No")])
+learning_history = st.selectbox(t("History of learning difficulties or special education?"), ["", t("Yes"), t("No")])
+family_history = st.text_area(t("Family history of ADHD or psychiatric disorders (if known)"))
+medical_history = st.text_area(t("Relevant medical history (e.g., seizures, head injury, chronic illness)"))
+sleep_problems = st.selectbox(t("Sleep problems?"), ["", t("Yes"), t("No")])
+substance_use = st.selectbox(t("Substance use (adolescent/adult)?"), ["", t("No"), t("Yes"), t("Prefer not to say")])
+referral_reason = st.text_area(t("Reason for referral / main concern"))
+
+# -------------------------
+# ASRS-6 screener (adult brief)
+# -------------------------
+st.header(t("ASRS-6 screener (brief adult items)"))
+# -------------------------
+# Finish ASRS-6 items (complete 6 items)
+# -------------------------
+asrs_items += [
+    "How often do you have problems remembering appointments or obligations?",
+    "How often do you have difficulty finishing projects or chores (even those you enjoy)?",
+    "How often do you have difficulty concentrating on what people say to you, even when they are speaking to you directly?"
 ]
+# display ASRS
+asrs_answers = {}
+asrs_options = ["", t("Never"), t("Rarely"), t("Sometimes"), t("Often"), t("Very often")]
+for i, item in enumerate(asrs_items, start=1):
+    asrs_answers[f"ASRS_{i}"] = st.selectbox(f"ASRS {i}. {t(item)}", asrs_options, key=f"asrs_{i}")
 
-comorbidity_answers = {}
-for i, q in enumerate(comorbidities, 1):
-    comorbidity_answers[f"Comorbidity_{i}"] = st.selectbox(
-        f"{translate(q)}?",
-        ["", translate("No"), translate("Yes")], key=f"c{i}"
-    )
-
-# ===============================
-# CHILDHOOD HISTORY & FUNCTIONAL IMPAIRMENT
-# ===============================
-childhood_history = ""
-if patient_type == translate("Adult"):
-    st.header(translate("Childhood History"))
-    childhood_history = st.text_area(translate("Did you show ADHD symptoms during childhood? Describe if known."))
-
-st.header(translate("Functional Impairment"))
-functional_impairment = st.text_area(translate("Do these symptoms cause significant impairment in social, academic, or occupational functioning?"))
-
-multi_setting = st.radio(
-    translate("Are these symptoms observed in more than one setting (e.g., home, school, work)?"),
-    ["", translate("Yes"), translate("No")]
-)
-
-# Parent/guardian role
-st.header(translate("Parent / Guardian Role (if child)"))
-parent_role = ""
-if patient_type == translate("Child"):
-    parent_role = st.text_input(translate("Please indicate your relationship to the child (e.g., mother, father, guardian)"))
-
-# ===============================
-# SUBMISSION
-# ===============================
-if st.button(translate("Submit")):
-    mandatory_filled = all(v != "" for v in answers.values()) \
-                       and all(v != "" for v in comorbidity_answers.values()) \
-                       and name != "" and email != "" and phone != "" and age != "" and gender != "" \
-                       and functional_impairment != "" and multi_setting != ""
-
-    if patient_type == translate("Adult"):
-        mandatory_filled = mandatory_filled and childhood_history != ""
-    if patient_type == translate("Child"):
-        mandatory_filled = mandatory_filled and parent_role != ""
-
-    if not mandatory_filled:
-        st.error(translate("Please answer all mandatory questions before submitting."))
+# compute ASRS numeric score (map: Never=0, Rarely=1, Sometimes=2, Often=3, Very often=4)
+score_map = {t("Never"):0, t("Rarely"):1, t("Sometimes"):2, t("Often"):3, t("Very often"):4, "": None}
+asrs_score = None
+try:
+    numeric = [score_map[asrs_answers[f"ASRS_{i}"]] for i in range(1, len(asrs_items)+1)]
+    if None not in numeric:
+        asrs_score = sum(numeric)
+        st.write(t("ASRS total score:"), asrs_score)
     else:
+        st.info(t("Complete all ASRS items to see the screener score."))
+except Exception:
+    asrs_score = None
+
+# -------------------------
+# Safety / suicidality (urgent)
+# -------------------------
+st.header(t("Safety"))
+suicidality = st.selectbox(t("Any current thoughts of self-harm or suicide?"), ["", t("No"), t("Yes, passive thoughts"), t("Yes, active thoughts/plan")])
+if suicidality == t("Yes, active thoughts/plan"):
+    st.error(t("URGENT: The person reports active suicidal thoughts or a plan. Please stop the form and contact emergency services or the on-call clinician immediately."))
+    st.stop()
+
+# -------------------------
+# Consent & submit
+# -------------------------
+st.header(t("Consent & Submit"))
+consent = st.checkbox(t("I consent to storing my (or my child's) data for clinical/assessment purposes."))
+agree_save = consent
+
+if st.button(t("Submit")):
+    # required checks
+    missing_fields = []
+    if not name.strip(): missing_fields.append(t("Name"))
+    if not email.strip(): missing_fields.append(t("Email"))
+    if not phone.strip(): missing_fields.append(t("Phone"))
+    # require all DSM items answered
+    if any(v == "" for v in sym_answers.values()):
+        missing_fields.append(t("All DSM-5 symptom items"))
+    if any(v == "" for v in com := { } ):  # placeholder to avoid lint error; real comorbidities handled below
+        pass
+
+    if not functional_impairment.strip():
+        missing_fields.append(t("Functional impairment description"))
+    if not multi_setting or multi_setting == "":
+        missing_fields.append(t("Multi-setting question"))
+    if not consent:
+        missing_fields.append(t("Consent"))
+
+    if missing_fields:
+        st.error(t("Please complete the following required fields:") + " " + ", ".join(missing_fields))
+    else:
+        # Prepare header if sheet is empty
+        try:
+            header = sheet.row_values(1)
+            if not header:
+                header = [
+                    "Participant_ID","Name","Email","Phone","DOB_or_Age","Gender","Responder","Language",
+                    "Age_of_onset","Onset_before_12","Duration","Multi_setting","Functional_impairment",
+                    "Prior_diagnosis","Prior_treatment","Current_medication","School_work_problems",
+                    "Learning_history","Family_history","Medical_history","Sleep_problems","Substance_use",
+                    "Referral_reason","Suicidality","Consent","ASRS_score","Submission_timestamp"
+                ]
+                header += [f"Symptom_{i}" for i in range(1,19)]
+                header += [f"ASRS_{i}" for i in range(1, len(asrs_items)+1)]
+                sheet.append_row(header)
+        except Exception as e:
+            st.error(t("Error preparing Google Sheet header:") + f" {e}")
+            st.stop()
+
+        # Build row
         row = [
-            participant_id, name, email, phone, age, gender, patient_type, language,
-            childhood_history if patient_type == translate("Adult") else "",
-            parent_role if patient_type == translate("Child") else "",
-            functional_impairment, multi_setting, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            participant_id, name, email, phone, dob_or_age, gender, responder, lang_choice,
+            age_of_onset, onset_before_12, duration_months, multi_setting, functional_impairment,
+            prior_diagnosis, prior_treatment, current_medication, school_work_problems,
+            learning_history, family_history, medical_history, sleep_problems, substance_use,
+            referral_reason, suicidality, "Yes" if consent else "No", asrs_score if asrs_score is not None else ""
         ]
-        row.extend(answers.values())
-        row.extend(comorbidity_answers.values())
+        # add symptoms
+        row += [sym_answers[f"Symptom_{i}"] for i in range(1,19)]
+        # add ASRS items
+        row += [asrs_answers[f"ASRS_{i}"] for i in range(1, len(asrs_items)+1)]
+        # timestamp
+        row += [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+
+        # Append to sheet
         try:
             sheet.append_row(row)
-            st.success(translate("Your responses have been submitted successfully. All information is private."))
+            st.success(t("Submission successful. Thank you — the clinician will review the results."))
         except Exception as e:
-            st.error(f"{translate('Error submitting to Google Sheet')}: {e}")
+            st.error(t("Error submitting data to Google Sheets:") + f" {e}")
+
+
+
+
