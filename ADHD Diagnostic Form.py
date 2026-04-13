@@ -39,7 +39,7 @@ lang_choice = st.selectbox(
 lang_code = {"English": "en", "Français": "fr", "العربية": "ar"}[lang_choice]
 
 # -------------------------
-# TRANSLATIONS (CLEAN + CLINICAL)
+# TRANSLATIONS (NO AUTO TRANSLATION)
 # -------------------------
 T = {
     "title": {
@@ -93,7 +93,7 @@ def t(k):
     return T[k][lang_code]
 
 # -------------------------
-# OPTIONS (FIXED TRANSLATION)
+# OPTIONS (FREQUENCY - FIXED TRANSLATION)
 # -------------------------
 freq_options = {
     "en": ["", "Never", "Rarely", "Sometimes", "Often", "Very often"],
@@ -102,120 +102,87 @@ freq_options = {
 }
 
 # -------------------------
-# DSM-5 QUESTIONS (FULL RESTORED)
+# EEG OPTIONS (NEW - TRANSLATED)
+# -------------------------
+eeg_options = {
+    "en": ["Yes", "No"],
+    "fr": ["Oui", "Non"],
+    "ar": ["نعم", "لا"]
+}
+
+# -------------------------
+# DSM-5 QUESTIONS
 # -------------------------
 SYMPTOMS = [
-    {
-        "en": "Fails to give close attention to details or makes careless mistakes",
-        "fr": "Ne prête pas attention aux détails ou fait des erreurs d’inattention",
-        "ar": "لا ينتبه للتفاصيل أو يرتكب أخطاء بسبب الإهمال"
-    },
-    {
-        "en": "Has difficulty sustaining attention in tasks or play",
-        "fr": "A des difficultés à maintenir son attention",
-        "ar": "يواجه صعوبة في الحفاظ على الانتباه"
-    },
-    {
-        "en": "Does not seem to listen when spoken to directly",
-        "fr": "Semble ne pas écouter lorsqu’on lui parle directement",
-        "ar": "يبدو وكأنه لا يستمع عند التحدث إليه مباشرة"
-    },
-    {
-        "en": "Does not follow through on instructions or finish tasks",
-        "fr": "Ne suit pas les instructions ou ne termine pas les tâches",
-        "ar": "لا يتبع التعليمات أو لا يكمل المهام"
-    },
-    {
-        "en": "Has difficulty organizing tasks and activities",
-        "fr": "A des difficultés à organiser les tâches",
-        "ar": "يواجه صعوبة في تنظيم المهام"
-    },
-    {
-        "en": "Avoids tasks requiring sustained mental effort",
-        "fr": "Évite les tâches nécessitant un effort mental",
-        "ar": "يتجنب المهام التي تتطلب جهداً ذهنياً"
-    },
-    {
-        "en": "Loses things necessary for tasks or activities",
-        "fr": "Perd des objets nécessaires",
-        "ar": "يفقد الأشياء الضرورية"
-    },
-    {
-        "en": "Is easily distracted",
-        "fr": "Facilement distrait",
-        "ar": "يتشتت بسهولة"
-    },
-    {
-        "en": "Is often forgetful in daily activities",
-        "fr": "Oublis fréquents",
-        "ar": "كثير النسيان"
-    },
-    {
-        "en": "Fidgets or taps hands or feet",
-        "fr": "Remue les mains أو pieds",
-        "ar": "يتململ أو يحرك يديه أو قدميه"
-    },
-    {
-        "en": "Leaves seat when remaining seated is expected",
-        "fr": "Se lève alors qu’il doit rester assis",
-        "ar": "يغادر مكانه عندما يجب أن يبقى جالساً"
-    },
-    {
-        "en": "Runs or climbs excessively",
-        "fr": "Court ou grimpe excessivement",
-        "ar": "يركض أو يتسلق بشكل مفرط"
-    },
-    {
-        "en": "Difficulty playing quietly",
-        "fr": "Difficulté à jouer calmement",
-        "ar": "صعوبة في اللعب بهدوء"
-    },
-    {
-        "en": "Is often 'on the go'",
-        "fr": "Toujours en mouvement",
-        "ar": "دائم الحركة"
-    },
-    {
-        "en": "Talks excessively",
-        "fr": "Parle excessivement",
-        "ar": "يتحدث كثيراً"
-    },
-    {
-        "en": "Blurts out answers before questions are completed",
-        "fr": "Répond avant la fin",
-        "ar": "يجيب قبل انتهاء السؤال"
-    },
-    {
-        "en": "Has difficulty waiting turn",
-        "fr": "Difficulté à attendre son tour",
-        "ar": "صعوبة في انتظار الدور"
-    },
-    {
-        "en": "Interrupts or intrudes on others",
-        "fr": "Interrompt les autres",
-        "ar": "يقاطع الآخرين"
-    }
+    {"en": "Fails to give close attention to details or makes careless mistakes",
+     "fr": "Ne prête pas attention aux détails ou fait des erreurs d’inattention",
+     "ar": "لا ينتبه للتفاصيل أو يرتكب أخطاء بسبب الإهمال"},
+    {"en": "Has difficulty sustaining attention in tasks or play",
+     "fr": "A des difficultés à maintenir son attention",
+     "ar": "يواجه صعوبة في الحفاظ على الانتباه"},
+    {"en": "Does not seem to listen when spoken to directly",
+     "fr": "Semble ne pas écouter lorsqu’on lui parle directement",
+     "ar": "يبدو وكأنه لا يستمع عند التحدث إليه مباشرة"},
+    {"en": "Does not follow through on instructions or finish tasks",
+     "fr": "Ne suit pas les instructions ou ne termine pas les tâches",
+     "ar": "لا يتبع التعليمات أو لا يكمل المهام"},
+    {"en": "Has difficulty organizing tasks and activities",
+     "fr": "A des difficultés à organiser les tâches",
+     "ar": "يواجه صعوبة في تنظيم المهام"},
+    {"en": "Avoids tasks requiring sustained mental effort",
+     "fr": "Évite les tâches nécessitant un effort mental",
+     "ar": "يتجنب المهام التي تتطلب جهداً ذهنياً"},
+    {"en": "Loses things necessary for tasks or activities",
+     "fr": "Perd des objets nécessaires",
+     "ar": "يفقد الأشياء الضرورية"},
+    {"en": "Is easily distracted",
+     "fr": "Facilement distrait",
+     "ar": "يتشتت بسهولة"},
+    {"en": "Is often forgetful in daily activities",
+     "fr": "Oublis fréquents",
+     "ar": "كثير النسيان"},
+    {"en": "Fidgets or taps hands or feet",
+     "fr": "Remue les mains ou pieds",
+     "ar": "يتململ أو يحرك يديه أو قدميه"},
+    {"en": "Leaves seat when remaining seated is expected",
+     "fr": "Se lève alors qu’il doit rester assis",
+     "ar": "يغادر مكانه عندما يجب أن يبقى جالساً"},
+    {"en": "Runs or climbs excessively",
+     "fr": "Court ou grimpe excessivement",
+     "ar": "يركض أو يتسلق بشكل مفرط"},
+    {"en": "Difficulty playing quietly",
+     "fr": "Difficulté à jouer calmement",
+     "ar": "صعوبة في اللعب بهدوء"},
+    {"en": "Is often 'on the go'",
+     "fr": "Toujours en mouvement",
+     "ar": "دائم الحركة"},
+    {"en": "Talks excessively",
+     "fr": "Parle excessivement",
+     "ar": "يتحدث كثيراً"},
+    {"en": "Blurts out answers before questions are completed",
+     "fr": "Répond avant la fin",
+     "ar": "يجيب قبل انتهاء السؤال"},
+    {"en": "Has difficulty waiting turn",
+     "fr": "Difficulté à attendre son tour",
+     "ar": "صعوبة في انتظار الدور"},
+    {"en": "Interrupts or intrudes on others",
+     "fr": "Interrompt les autres",
+     "ar": "يقاطع الآخرين"}
 ]
 
 # -------------------------
 # ASRS
 # -------------------------
 asrs_items = [
-    {
-        "en": "How often do you forget appointments or obligations?",
-        "fr": "À quelle fréquence oubliez-vous vos rendez-vous ?",
-        "ar": "كم مرة تنسى المواعيد؟"
-    },
-    {
-        "en": "How often do you have difficulty finishing tasks?",
-        "fr": "À quelle fréquence avez-vous du mal à terminer les tâches ?",
-        "ar": "كم مرة تواجه صعوبة في إنهاء المهام؟"
-    },
-    {
-        "en": "How often do you have difficulty concentrating when spoken to?",
-        "fr": "À quelle fréquence avez-vous des difficultés à vous concentrer lorsqu’on vous parle ?",
-        "ar": "كم مرة تواجه صعوبة في التركيز عند التحدث إليك؟"
-    }
+    {"en": "How often do you forget appointments or obligations?",
+     "fr": "À quelle fréquence oubliez-vous vos rendez-vous ?",
+     "ar": "كم مرة تنسى المواعيد؟"},
+    {"en": "How often do you have difficulty finishing tasks?",
+     "fr": "À quelle fréquence avez-vous du mal à terminer les tâches ?",
+     "ar": "كم مرة تواجه صعوبة في إنهاء المهام؟"},
+    {"en": "How often do you have difficulty concentrating when spoken to?",
+     "fr": "À quelle fréquence avez-vous des difficultés à vous concentrer lorsqu’on vous parle ?",
+     "ar": "كم مرة تواجه صعوبة في التركيز عند التحدث إليك؟"}
 ]
 
 # -------------------------
@@ -224,9 +191,6 @@ asrs_items = [
 st.title(t("title"))
 st.write(t("intro"))
 
-# -------------------------
-# PARTICIPANT INFO
-# -------------------------
 st.header(t("participant"))
 
 participant_id = str(uuid.uuid4())
@@ -236,51 +200,31 @@ phone = st.text_input("Phone / الهاتف")
 dob_or_age = st.text_input("Age / Date of birth")
 
 gender = st.selectbox("Gender", ["Male", "Female"])
+responder = st.selectbox("Responder", ["Self", "Parent", "Teacher"])
 
-responder = st.selectbox(
-    "Responder",
-    ["Self", "Parent", "Teacher"]
-)
-
-# -------------------------
-# DSM SECTION
-# -------------------------
 st.header(t("dsm"))
 
 sym_answers = {}
-
 for i, s in enumerate(SYMPTOMS, 1):
-    label = s[lang_code]
     sym_answers[f"Symptom_{i}"] = st.selectbox(
-        f"{i}. {label}",
+        f"{i}. {s[lang_code]}",
         freq_options[lang_code]
     )
 
-# -------------------------
-# ASRS SECTION
-# -------------------------
 st.header(t("asrs"))
 
 asrs_answers = {}
-
 for i, q in enumerate(asrs_items, 1):
     asrs_answers[f"ASRS_{i}"] = st.selectbox(
         f"{i}. {q[lang_code]}",
         freq_options[lang_code]
     )
 
-# -------------------------
-# HISTORY SECTION
-# (kept simple but preserved)
-# -------------------------
 st.header(t("history"))
 
 functional_impairment = st.text_area("Functional impairment / impact")
 multi_setting = st.selectbox("Symptoms in multiple settings?", ["", "Yes", "No"])
 
-# -------------------------
-# SAFETY
-# -------------------------
 st.header(t("safety"))
 
 suicidality = st.selectbox(
@@ -289,16 +233,13 @@ suicidality = st.selectbox(
 )
 
 # -------------------------
-# EEG QUESTION (ADDED)
+# EEG QUESTION (NOW TRANSLATED)
 # -------------------------
 eeg_consent = st.selectbox(
     t("eeg"),
-    ["Yes", "No"]
+    eeg_options[lang_code]
 )
 
-# -------------------------
-# CONSENT
-# -------------------------
 consent = st.checkbox(t("consent"))
 
 # -------------------------
