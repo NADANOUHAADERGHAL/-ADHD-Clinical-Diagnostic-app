@@ -39,16 +39,7 @@ lang_choice = st.selectbox(
 lang_code = {"English": "en", "Français": "fr", "العربية": "ar"}[lang_choice]
 
 # -------------------------
-# ANSWER OPTIONS (TRANSLATED)
-# -------------------------
-OPTIONS = {
-    "en": ["", "Never", "Rarely", "Sometimes", "Often", "Very often"],
-    "fr": ["", "Jamais", "Rarement", "Parfois", "Souvent", "Très souvent"],
-    "ar": ["", "أبداً", "نادراً", "أحياناً", "غالباً", "كثيراً جداً"]
-}
-
-# -------------------------
-# TEXT TRANSLATIONS
+# TRANSLATIONS
 # -------------------------
 TEXT = {
     "title": {
@@ -57,115 +48,118 @@ TEXT = {
         "ar": "استبيان اضطراب فرط الحركة وتشتت الانتباه"
     },
     "intro": {
-        "en": "Please answer the following questions based on behavior during the last 6 months.",
-        "fr": "Veuillez répondre aux questions suivantes en vous basant sur les 6 derniers mois.",
-        "ar": "يرجى الإجابة على الأسئلة التالية بناءً على السلوك خلال الأشهر الستة الماضية."
+        "en": "Please answer based on behavior over the last 6 months.",
+        "fr": "Veuillez répondre selon le comportement خلال les 6 derniers mois.",
+        "ar": "يرجى الإجابة بناءً على السلوك خلال الأشهر الستة الماضية."
     },
     "submit": {"en": "Submit", "fr": "Soumettre", "ar": "إرسال"},
     "consent": {
-        "en": "I consent to data collection for clinical/research purposes",
-        "fr": "Je consens à la collecte des données à des fins cliniques/recherche",
-        "ar": "أوافق على جمع البيانات لأغراض سريرية/بحثية"
-    }
+        "en": "I consent to data collection for research purposes",
+        "fr": "Je consens à la collecte des données pour la recherche",
+        "ar": "أوافق على جمع البيانات لأغراض البحث"
+    },
+    "eeg": {
+        "en": "Do you agree to participate in an EEG test?",
+        "fr": "Acceptez-vous de participer à un test EEG ?",
+        "ar": "هل توافق على المشاركة في اختبار تخطيط الدماغ (EEG)؟"
+    },
+    "yes": {"en": "Yes", "fr": "Oui", "ar": "نعم"},
+    "no": {"en": "No", "fr": "Non", "ar": "لا"}
 }
 
 def t(key):
     return TEXT[key][lang_code]
 
 # -------------------------
-# DSM QUESTIONS (FULL TRANSLATION)
+# ANSWER OPTIONS
+# -------------------------
+OPTIONS = {
+    "en": ["", "Never", "Rarely", "Sometimes", "Often", "Very often"],
+    "fr": ["", "Jamais", "Rarement", "Parfois", "Souvent", "Très souvent"],
+    "ar": ["", "أبداً", "نادراً", "أحياناً", "غالباً", "كثيراً جداً"]
+}
+
+YES_NO = {
+    "en": [t("yes"), t("no")],
+    "fr": [t("yes"), t("no")],
+    "ar": [t("yes"), t("no")]
+}
+
+# -------------------------
+# DSM QUESTIONS (18 FULL)
 # -------------------------
 QUESTIONS = [
-    {
-        "en": "How often do you make careless mistakes in school, work, or other activities?",
-        "fr": "À quelle fréquence faites-vous des erreurs d’inattention dans votre travail ou vos activités ?",
-        "ar": "كم مرة ترتكب أخطاء بسبب الإهمال في العمل أو الدراسة أو الأنشطة الأخرى؟"
-    },
-    {
-        "en": "How often do you have difficulty sustaining attention?",
-        "fr": "À quelle fréquence avez-vous des difficultés à maintenir votre attention ?",
-        "ar": "كم مرة تواجه صعوبة في الحفاظ على الانتباه؟"
-    },
-    {
-        "en": "How often do you seem not to listen when spoken to directly?",
-        "fr": "À quelle fréquence semblez-vous ne pas écouter lorsqu’on vous parle directement ؟",
-        "ar": "كم مرة يبدو أنك لا تستمع عند التحدث إليك مباشرة؟"
-    },
-    {
-        "en": "How often do you fail to complete tasks?",
-        "fr": "À quelle fréquence ne terminez-vous pas vos tâches ؟",
-        "ar": "كم مرة لا تكمل المهام المطلوبة منك؟"
-    },
-    {
-        "en": "How often do you have difficulty organizing tasks?",
-        "fr": "À quelle fréquence avez-vous des difficultés à organiser vos tâches ؟",
-        "ar": "كم مرة تواجه صعوبة في تنظيم المهام؟"
-    },
-    {
-        "en": "How often do you avoid tasks requiring mental effort?",
-        "fr": "À quelle fréquence évitez-vous les tâches nécessitant un effort mental ؟",
-        "ar": "كم مرة تتجنب المهام التي تتطلب جهداً ذهنياً؟"
-    },
-    {
-        "en": "How often do you lose important items?",
-        "fr": "À quelle fréquence perdez-vous des objets importants ؟",
-        "ar": "كم مرة تفقد أشياء مهمة؟"
-    },
-    {
-        "en": "How often are you easily distracted?",
-        "fr": "À quelle fréquence êtes-vous facilement distrait ؟",
-        "ar": "كم مرة تتشتت بسهولة؟"
-    },
-    {
-        "en": "How often are you forgetful in daily activities?",
-        "fr": "À quelle fréquence oubliez-vous des activités quotidiennes ؟",
-        "ar": "كم مرة تنسى الأنشطة اليومية؟"
-    },
-    {
-        "en": "How often do you fidget or move excessively?",
-        "fr": "À quelle fréquence bougez-vous de manière excessive ؟",
-        "ar": "كم مرة تتحرك أو تتململ بشكل مفرط؟"
-    },
-    {
-        "en": "How often do you leave your seat when expected to stay seated?",
-        "fr": "À quelle fréquence vous levez-vous alors que vous devez rester assis ؟",
-        "ar": "كم مرة تغادر مكانك عندما يُطلب منك البقاء جالساً؟"
-    },
-    {
-        "en": "How often do you feel restless?",
-        "fr": "À quelle fréquence vous sentez-vous agité ؟",
-        "ar": "كم مرة تشعر بعدم الهدوء؟"
-    },
-    {
-        "en": "How often do you have difficulty engaging in quiet activities?",
-        "fr": "À quelle fréquence avez-vous des difficultés à rester calme ؟",
-        "ar": "كم مرة تواجه صعوبة في القيام بأنشطة بهدوء؟"
-    },
-    {
-        "en": "How often do you feel constantly active?",
-        "fr": "À quelle fréquence êtes-vous constamment actif ؟",
-        "ar": "كم مرة تشعر أنك دائم الحركة؟"
-    },
-    {
-        "en": "How often do you talk excessively?",
-        "fr": "À quelle fréquence parlez-vous de façon excessive ؟",
-        "ar": "كم مرة تتحدث بشكل مفرط؟"
-    },
-    {
-        "en": "How often do you interrupt others?",
-        "fr": "À quelle fréquence interrompez-vous les autres ؟",
-        "ar": "كم مرة تقاطع الآخرين؟"
-    },
-    {
-        "en": "How often do you have difficulty waiting your turn?",
-        "fr": "À quelle fréquence avez-vous du mal à attendre votre tour ؟",
-        "ar": "كم مرة تواجه صعوبة في انتظار دورك؟"
-    },
-    {
-        "en": "How often do you answer before a question is completed?",
-        "fr": "À quelle fréquence répondez-vous avant la fin de la question ؟",
-        "ar": "كم مرة تجيب قبل انتهاء السؤال؟"
-    }
+    {"en": "Fails to give close attention to details or makes careless mistakes",
+     "fr": "Ne prête pas attention aux détails ou fait des erreurs d’inattention",
+     "ar": "لا ينتبه للتفاصيل أو يرتكب أخطاء بسبب الإهمال"},
+
+    {"en": "Has difficulty sustaining attention",
+     "fr": "A des difficultés à maintenir son attention",
+     "ar": "يواجه صعوبة في الحفاظ على الانتباه"},
+
+    {"en": "Does not seem to listen when spoken to directly",
+     "fr": "Semble ne pas écouter lorsqu’on lui parle",
+     "ar": "يبدو وكأنه لا يستمع عند التحدث إليه"},
+
+    {"en": "Does not follow instructions or finish tasks",
+     "fr": "Ne suit pas les instructions ou ne termine pas les tâches",
+     "ar": "لا يتبع التعليمات أو لا يكمل المهام"},
+
+    {"en": "Difficulty organizing tasks",
+     "fr": "Difficulté à organiser les tâches",
+     "ar": "صعوبة في تنظيم المهام"},
+
+    {"en": "Avoids tasks requiring mental effort",
+     "fr": "Évite les tâches nécessitant un effort mental",
+     "ar": "يتجنب المهام التي تتطلب جهداً ذهنياً"},
+
+    {"en": "Loses necessary items",
+     "fr": "Perd des objets nécessaires",
+     "ar": "يفقد الأشياء الضرورية"},
+
+    {"en": "Easily distracted",
+     "fr": "Facilement distrait",
+     "ar": "يتشتت بسهولة"},
+
+    {"en": "Forgetful in daily activities",
+     "fr": "Oublis fréquents",
+     "ar": "كثير النسيان"},
+
+    {"en": "Fidgets or moves excessively",
+     "fr": "Bouge excessivement",
+     "ar": "يتحرك بشكل مفرط"},
+
+    {"en": "Leaves seat when expected to stay seated",
+     "fr": "Se lève lorsqu’il doit rester assis",
+     "ar": "يغادر مكانه عندما يجب أن يبقى جالساً"},
+
+    {"en": "Runs or climbs excessively",
+     "fr": "Court ou grimpe excessivement",
+     "ar": "يركض أو يتسلق بشكل مفرط"},
+
+    {"en": "Difficulty playing quietly",
+     "fr": "Difficulté à jouer calmement",
+     "ar": "صعوبة في اللعب بهدوء"},
+
+    {"en": "Always on the go",
+     "fr": "Toujours en mouvement",
+     "ar": "دائم الحركة"},
+
+    {"en": "Talks excessively",
+     "fr": "Parle excessivement",
+     "ar": "يتحدث كثيراً"},
+
+    {"en": "Blurts out answers",
+     "fr": "Répond avant la fin",
+     "ar": "يجيب قبل انتهاء السؤال"},
+
+    {"en": "Difficulty waiting turn",
+     "fr": "Difficulté à attendre son tour",
+     "ar": "صعوبة في انتظار الدور"},
+
+    {"en": "Interrupts others",
+     "fr": "Interrompt les autres",
+     "ar": "يقاطع الآخرين"}
 ]
 
 # -------------------------
@@ -182,6 +176,13 @@ for i, q in enumerate(QUESTIONS, 1):
         OPTIONS[lang_code]
     )
 
+# EEG QUESTION
+eeg_consent = st.selectbox(
+    t("eeg"),
+    YES_NO[lang_code]
+)
+
+# DATA CONSENT
 consent = st.checkbox(t("consent"))
 
 # -------------------------
@@ -189,11 +190,16 @@ consent = st.checkbox(t("consent"))
 # -------------------------
 if st.button(t("submit")):
 
-    if not consent or "" in answers.values():
-        st.error("Please complete all questions")
+    if "" in answers.values() or not consent:
+        st.error("Please complete all fields")
     else:
-        row = [str(uuid.uuid4()), lang_choice]
+        row = [
+            str(uuid.uuid4()),
+            lang_choice
+        ]
+
         row += list(answers.values())
+        row.append(eeg_consent)
         row.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
         try:
